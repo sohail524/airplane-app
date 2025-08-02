@@ -19,6 +19,9 @@ class AirplaneTicket(Document):
 
     def calculate_total_amount(self):
         total_add_ons = 0.0
+        
+
+		
 
         # Sum all add-on item amounts
         for item in self.add_ons:
