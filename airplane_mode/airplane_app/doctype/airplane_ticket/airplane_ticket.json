@@ -22,8 +22,10 @@
   "add_ons",
   "section_break_cepi",
   "flight_price",
+  "currency",
   "column_break_ocyb",
-  "total_amount"
+  "total_amount",
+  "company_logo"
  ],
  "fields": [
   {
@@ -91,7 +93,8 @@
   },
   {
    "fieldname": "column_break_oulb",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "hidden": 1
   },
   {
    "fieldname": "status",
@@ -114,7 +117,15 @@
    "fieldname": "flight_price",
    "fieldtype": "Currency",
    "label": "Flight Price",
+   "options": "currency",
    "reqd": 1
+  },
+  {
+   "default": "PKR",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
   },
   {
    "fieldname": "total_amount",
@@ -136,12 +147,20 @@
    "fieldtype": "Data",
    "label": "Seat",
    "read_only": 1
+  },
+  {
+   "fieldname": "company_logo",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Company logo",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
+ "image_field": "company_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-02 15:03:36.963431",
+ "modified": "2025-08-05 09:15:35.310129",
  "modified_by": "Administrator",
  "module": "airplane app",
  "name": "Airplane Ticket",
