@@ -1,38 +1,37 @@
-// Copyright (c) 2025, sohail and contributors
-// For license information, please see license.txt
-
 frappe.query_reports["Airplane Ticket Report"] = {
-    formatter: function(value, row, column, data, default_formatter) {
-        let formatted = default_formatter(value, row, column, data);
-        if (data && data.name === "TOTAL") {
-            formatted = `<strong>${formatted}</strong>`;
-        }
-        return formatted;
-    },
-
-    filters: [
+    "filters": [
         {
-            "fieldname": "passenger",
-            "label": __("Passenger Name"),
-            "fieldtype": "Data",
-            "width": 150
+            fieldname: "ticket_no",
+            label: __("Ticket Number"),
+            fieldtype: "Data",
+            reqd: 0
         },
         {
-            "fieldname": "status",
-            "label": __("Status"),
-            "fieldtype": "Select",
-            "options": ["", "Booked", "Cancelled", "Completed"],
-            "width": 120
+            fieldname: "passenger",
+            label: __("Passenger"),
+            fieldtype: "Data",
+            reqd: 0
         },
         {
-            "fieldname": "from_date",
-            "label": __("From Date"),
-            "fieldtype": "Date"
+            fieldname: "source_airport",
+            label: __("Source Airport"),
+            fieldtype: "Link",
+            options: "Airport",
+            reqd: 0
         },
         {
-            "fieldname": "to_date",
-            "label": __("To Date"),
-            "fieldtype": "Date"
+            fieldname: "destination_airport",
+            label: __("Destination Airport"),
+            fieldtype: "Link",
+            options: "Airport",
+            reqd: 0
+        },
+        {
+            fieldname: "status",
+            label: __("Status"),
+            fieldtype: "Select",
+            options: "Booked\nCancelled\nCompleted",
+            reqd: 0
         }
     ]
 };
