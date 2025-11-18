@@ -30,7 +30,7 @@ frappe.query_reports["Airplane Ticket Report"] = {
             fieldname: "status",
             label: __("Status"),
             fieldtype: "Select",
-            options: "Booked\nCancelled\nCompleted",
+            options: "Booked\nCancelled\nCompleted\nBooked\nChecked-In",
             reqd: 0
         }
     ]
