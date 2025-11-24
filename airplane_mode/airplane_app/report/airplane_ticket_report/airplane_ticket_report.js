@@ -39,9 +39,9 @@ frappe.query_reports["Airplane Ticket Report"] = {
         // Default formatting
         value = default_formatter(value, row, column, data);
 
-        // Bold total row
+        // Bold total row with new color (daily GitHub tweak 😎)
         if(data.name === "TOTAL") {
-            value = "<b style='color:green; font-size:14px;'>" + value + "</b>";
+            value = "<b style='color:blue; font-size:14px;'>" + value + "</b>"; // changed color to blue
         }
 
         // Bold total_amount column in regular rows
