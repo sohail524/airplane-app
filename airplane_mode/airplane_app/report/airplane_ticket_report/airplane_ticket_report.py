@@ -3,17 +3,17 @@ import frappe
 from frappe.utils import flt
 
 def execute(filters=None):
-    if not filters:
-        filters = {}
+    filters = filters or {}
 
     columns = get_columns()
     data = get_data(filters)
-    totals = get_totals(data)
 
+    totals = get_totals(data)
     if totals:
         data.append(totals)
 
     return columns, data
+
 
 def get_columns():
     return [
@@ -25,16 +25,23 @@ def get_columns():
         {"label": "Seat", "fieldname": "seat", "fieldtype": "Data", "width": 80},
         {"label": "Flight Price", "fieldname": "flight_price", "fieldtype": "Currency", "width": 120},
         {"label": "Add-ons Amount", "fieldname": "addons_amount", "fieldtype": "Currency", "width": 120},
-        {"label": "Total Amount", "fieldname": "total_amount", "fieldtype": "Currency", "width": 120, "options": {"bold": True}},
+        {"label": "Total Amount", "fieldname": "total_amount", "fieldtype": "Currency", "width": 120},
         {"label": "Status", "fieldname": "status", "fieldtype": "Data", "width": 100}
     ]
 
-def get_data(filters):
-    conditions = ""
+
+def build_conditions(filters):
+    conditions = []
     if filters.get("ticket_id"):
-        conditions += f" and t.name = '{filters.get('ticket_id')}'"
+        conditions.append("t.name = %(ticket_id)s")
     if filters.get("passenger"):
-        conditions += f" and t.passenger = '{filters.get('passenger')}'"
+        conditions.append("t.passenger = %(passenger)s")
+
+    return " AND " + " AND ".join(conditions) if conditions else ""
+
+
+def get_data(filters):
+    conditions = build_conditions(filters)
 
     tickets = frappe.db.sql(f"""
         SELECT 
@@ -50,17 +57,36 @@ def get_data(filters):
         FROM `tabAirplane Ticket` t
         WHERE t.docstatus < 2 {conditions}
         ORDER BY t.departure_date ASC
-    """, as_dict=True)
+    """, filters, as_dict=True)
 
-    # Calculate Add-ons amount for each ticket
+    # Add-ons calculation
     for ticket in tickets:
-        addons = frappe.db.sql("""
-            SELECT SUM(amount) as total_addons
-            FROM `tabAirplane Ticket Add-on Item`
-            WHERE parent=%s AND parentfield='add_ons'
-        """, ticket.name, as_dict=True)
-        ticket["addons_amount"] = addons[0]["total_addons"] if addons else 0
-        ticket["total_amount"] = flt(ticket["flight_price"]) + flt(ticket["addons_amount"])
+        addons_amount = frappe.db.get_value(
+            "Airplane Ticket Add-on Item",
+            {"parent": ticket.name, "parentfield": "add_ons"},
+            "SUM(amount)"
+        ) or 0
+
+        ticket["addons_amount"] = flt(addons_amount)
+        ticket["total_amount"] = flt(ticket.get("flight_price")) + flt(ticket["addons_amount"])
+
+    return tickets
+
+
+def get_totals(data):
+    if not data:
+        return None
+
+    total_flight = sum(flt(row.get("flight_price")) for row in data)
+    total_addons = sum(flt(row.get("addons_amount")) for row in data)
+    total_amount = sum(flt(row.get("total_amount")) for row in data)
+
+    return {
+        "name": "TOTAL",
+        "flight_price": total_flight,
+        "addons_amount": total_addons,
+        "total_amount": total_amount
+    }
 
     return tickets
 
