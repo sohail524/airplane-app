@@ -1,4 +1,5 @@
 # airplane_ticket_report.py
+
 import frappe
 from frappe.utils import flt
 
@@ -15,6 +16,10 @@ def execute(filters=None):
     return columns, data
 
 
+# -------------------------------------------------------------------
+# Columns
+# -------------------------------------------------------------------
+
 def get_columns():
     return [
         {"label": "Ticket ID", "fieldname": "name", "fieldtype": "Link", "options": "Airplane Ticket", "width": 120},
@@ -30,15 +35,24 @@ def get_columns():
     ]
 
 
+# -------------------------------------------------------------------
+# Conditions Builder
+# -------------------------------------------------------------------
+
 def build_conditions(filters):
     conditions = []
+
     if filters.get("ticket_id"):
         conditions.append("t.name = %(ticket_id)s")
     if filters.get("passenger"):
         conditions.append("t.passenger = %(passenger)s")
 
-    return " AND " + " AND ".join(conditions) if conditions else ""
+    return (" AND " + " AND ".join(conditions)) if conditions else ""
 
+
+# -------------------------------------------------------------------
+# Fetch Data + Add-ons
+# -------------------------------------------------------------------
 
 def get_data(filters):
     conditions = build_conditions(filters)
@@ -59,44 +73,27 @@ def get_data(filters):
         ORDER BY t.departure_date ASC
     """, filters, as_dict=True)
 
-    # Add-ons calculation
+    # Fetch Add-ons
     for ticket in tickets:
-        addons_amount = frappe.db.get_value(
-            "Airplane Ticket Add-on Item",
-            {"parent": ticket.name, "parentfield": "add_ons"},
-            "SUM(amount)"
-        ) or 0
+        addons_amount = frappe.db.sql("""
+            SELECT SUM(amount) 
+            FROM `tabAirplane Ticket Add-on Item`
+            WHERE parent = %s
+        """, (ticket.name,))[0][0] or 0
 
         ticket["addons_amount"] = flt(addons_amount)
-        ticket["total_amount"] = flt(ticket.get("flight_price")) + flt(ticket["addons_amount"])
+        ticket["total_amount"] = flt(ticket.flight_price) + flt(ticket.addons_amount)
 
     return tickets
 
 
-def get_totals(data):
-    if not data:
-        return None
-
-    total_flight = sum(flt(row.get("flight_price")) for row in data)
-    total_addons = sum(flt(row.get("addons_amount")) for row in data)
-    total_amount = sum(flt(row.get("total_amount")) for row in data)
-
-    return {
-        "name": "TOTAL",
-        "flight_price": total_flight,
-        "addons_amount": total_addons,
-        "total_amount": total_amount
-    }
-
-    return tickets
+# -------------------------------------------------------------------
+# Totals Footer Row
+# -------------------------------------------------------------------
 
 def get_totals(data):
     if not data:
         return None
-
-    total_amount = sum(flt(d.total_amount) for d in data)
-    total_flight_price = sum(flt(d.flight_price) for d in data)
-    total_addons = sum(flt(d.addons_amount) for d in data)
 
     return {
         "name": "TOTAL",
@@ -105,8 +102,8 @@ def get_totals(data):
         "destination_airport": "",
         "departure_date": "",
         "seat": "",
-        "flight_price": total_flight_price,
-        "addons_amount": total_addons,
-        "total_amount": total_amount,
+        "flight_price": sum(flt(d.flight_price) for d in data),
+        "addons_amount": sum(flt(d.addons_amount) for d in data),
+        "total_amount": sum(flt(d.total_amount) for d in data),
         "status": ""
     }
